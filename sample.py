@@ -1,5 +1,8 @@
 import PyPDF2
 import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize, sent_tokenize
+from nltk.probability import FreqDist
 
 # Ensure necessary NLTK data packages are downloaded
 nltk.download('punkt')
@@ -16,6 +19,31 @@ def extract_text_pypdf2(pdf_path):
         return text
     except FileNotFoundError:
         return "The specified PDF file was not found."
+
+def summarize_text(text, num_sentences=3):
+    # Tokenize the text
+    tokens = word_tokenize(text)
+
+    # Remove stopwords
+    stop_words = set(stopwords.words('english'))
+    filtered_tokens = [word for word in tokens if word.lower() not in stop_words and word.isalnum()]
+
+    # Calculate word frequencies
+    freq = FreqDist(filtered_tokens)
+
+    # Rank sentences based on word frequencies
+    sentences = sent_tokenize(text)
+    ranking = {}
+    for i, sentence in enumerate(sentences):
+        sentence_tokens = word_tokenize(sentence)
+        sentence_score = sum(freq[word] for word in sentence_tokens)
+        ranking[i] = sentence_score
+
+    # Get the top-ranked sentences
+    sorted_ranking = sorted(ranking, key=ranking.get, reverse=True)[:num_sentences]
+    summary = ' '.join(sentences[i] for i in sorted(sorted_ranking))
+   
+    return summary
 
 def answer_question(question, text):
     question_tokens = nltk.word_tokenize(question)
@@ -35,7 +63,7 @@ def answer_question(question, text):
     return candidate_answers[0]
 
 def main():
-    pdf_path = 'C:\\MARCUS AURELIUS\\bot\\Meditations.pdf'
+    pdf_path = "C:\\Users\\Student.DESKTOP-G81TD8G.000\\Downloads\\Meditations.pdf"
     print("Extracting text from PDF with PyPDF2...")
     extracted_text_pypdf2 = extract_text_pypdf2(pdf_path)
 
@@ -43,17 +71,38 @@ def main():
         print(extracted_text_pypdf2)
         return
 
-    print("Text extraction complete. You can now ask questions.")
+    print("Text extraction complete.")
 
     while True:
-        question = input("Enter your question (or type 'exit' to quit): ")
-        if question.lower() == 'exit':
+        print("\nChoose an option:")
+        print("1. Ask a question")
+        print("2. Summarize the text")
+        print("3. Print the entire PDF text")
+        print("4. Exit")
+
+        choice = input("Enter your choice: ")
+
+        if choice == '1':
+            question = input("Enter your question (or type 'exit' to quit): ")
+            if question.lower() == 'exit':
+                break
+            answer = answer_question(question, extracted_text_pypdf2)
+            print(f"Answer: {answer}\n")
+       
+        elif choice == '2':
+            summary = summarize_text(extracted_text_pypdf2)
+            print(f"Summary:\n{summary}\n")
+
+        elif choice == '3':
+            print(f"Full PDF Text:\n{extracted_text_pypdf2}\n")
+
+        elif choice == '4':
             break
-        answer = answer_question(question, extracted_text_pypdf2)
-        print(f"Answer: {answer}\n")
+       
+        else:
+            print("Invalid choice. Please choose again.")
+
+    print("Exiting...")
 
 if __name__ == "__main__":
     main()
-
-
-#C:\\MARCUS AURELIUS\\bot\\Meditations.pdf
