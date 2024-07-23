@@ -1,3 +1,4 @@
+import streamlit as st
 import PyPDF2
 import nltk
 from nltk.corpus import stopwords
@@ -42,7 +43,7 @@ def summarize_text(text, num_sentences=3):
     # Get the top-ranked sentences
     sorted_ranking = sorted(ranking, key=ranking.get, reverse=True)[:num_sentences]
     summary = ' '.join(sentences[i] for i in sorted(sorted_ranking))
-   
+
     return summary
 
 def answer_question(question, text):
@@ -62,47 +63,47 @@ def answer_question(question, text):
 
     return candidate_answers[0]
 
+# Streamlit application
 def main():
-    pdf_path = "C:\\Users\\Student.DESKTOP-G81TD8G.000\\Downloads\\Meditations.pdf"
-    print("Extracting text from PDF with PyPDF2...")
-    extracted_text_pypdf2 = extract_text_pypdf2(pdf_path)
+    st.title("PDF Text Extractor and Analyzer")
 
-    if extracted_text_pypdf2 == "The specified PDF file was not found.":
-        print(extracted_text_pypdf2)
-        return
+    uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 
-    print("Text extraction complete.")
+    if uploaded_file is not None:
+        pdf_path = uploaded_file.name
+        with open(pdf_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
 
-    while True:
-        print("\nChoose an option:")
-        print("1. Ask a question")
-        print("2. Summarize the text")
-        print("3. Print the entire PDF text")
-        print("4. Exit")
+        st.write("Extracting text from PDF...")
+        extracted_text_pypdf2 = extract_text_pypdf2(pdf_path)
 
-        choice = input("Enter your choice: ")
+        if extracted_text_pypdf2 == "The specified PDF file was not found.":
+            st.error(extracted_text_pypdf2)
+            return
 
-        if choice == '1':
-            question = input("Enter your question (or type 'exit' to quit): ")
-            if question.lower() == 'exit':
-                break
-            answer = answer_question(question, extracted_text_pypdf2)
-            print(f"Answer: {answer}\n")
-       
-        elif choice == '2':
-            summary = summarize_text(extracted_text_pypdf2)
-            print(f"Summary:\n{summary}\n")
+        st.success("Text extraction complete.")
 
-        elif choice == '3':
-            print(f"Full PDF Text:\n{extracted_text_pypdf2}\n")
+        option = st.selectbox(
+            'Choose an option',
+            ('Ask a question', 'Summarize the text', 'Print the entire PDF text', 'Exit')
+        )
 
-        elif choice == '4':
-            break
-       
-        else:
-            print("Invalid choice. Please choose again.")
-
-    print("Exiting...")
+        if option == 'Ask a question':
+            question = st.text_input("Enter your question")
+            if question:
+                answer = answer_question(question, extracted_text_pypdf2)
+                st.write(f"Answer: {answer}")
+        
+        elif option == 'Summarize the text':
+            num_sentences = st.slider("Number of sentences in summary", 1, 10, 3)
+            summary = summarize_text(extracted_text_pypdf2, num_sentences)
+            st.write(f"Summary:\n{summary}")
+        
+        elif option == 'Print the entire PDF text':
+            st.text_area("Full PDF Text", extracted_text_pypdf2, height=300)
+        
+        elif option == 'Exit':
+            st.write("Exiting...")
 
 if __name__ == "__main__":
     main()
