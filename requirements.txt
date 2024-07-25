@@ -1,7 +1,3 @@
-huggingface_hub
-chromadb
-langchain
-PyMuPDF
-pytesseract
-gradio
-python-poppler
+nltk
+PyPDF2
+streamlit
